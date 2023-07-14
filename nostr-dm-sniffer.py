@@ -37,6 +37,13 @@ subscription_request = [
 ]
 
 async def get_nip05(pubkey):
+    pubkey_metadata_reply = ""
+    pubkey_metadata = ""
+    json_acceptable_string = ""
+    d = ""
+    nip_05_identifier = ""
+    name = ""
+    display_name = ""
     search_filter_nip05 = {
         "kinds": [0],
         "authors": [pubkey]
@@ -79,6 +86,13 @@ async def get_nip05(pubkey):
     return nip_05_identifier
 async def process_event(event_json):
     #print(event_json)
+    sender = ""
+    content_str = ""
+    content_len = 0
+    content_str_without_iv = ""
+    iv_str = ""
+    iv_length_exact = 0
+    original_encrypted_length = 0
     print("--- DM DETECTED ---")
     sender = event_json["pubkey"]
     receiver = None
@@ -121,8 +135,10 @@ async def websocket_client(uri):
                     response = await websocket.recv()
                     response_json = json.loads(response)
 
+                    #print(response_json)
                     if response_json[0] == "EVENT":
-                        await process_event(response_json[2])
+                        if 'kind' in response_json[2] and response_json[2]['kind'] == 4:
+                            await process_event(response_json[2])
                     #time.sleep(1)
 
         except Exception as e:
