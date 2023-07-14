@@ -97,11 +97,11 @@ async def process_event(event_json):
 
     content_str = event_json["content"]
     content_len = len(event_json["content"])
-    _, iv_str = content_str.split("?iv=")
+    content_str_without_iv, iv_str = content_str.split("?iv=")
     iv_length_exact = len(iv_str)
     original_encrypted_length = content_len - len("?iv=") - iv_length_exact
     print(f"Length of Encrypted Content: {original_encrypted_length}")
-    print(f"Encrypted Content: {content_str}")
+    print(f"Encrypted Content: {content_str_without_iv}")
     print(f"Encrypted IV: {iv_str}")
 
     timestamp_utc = datetime.utcfromtimestamp(event_json["created_at"]).isoformat()
