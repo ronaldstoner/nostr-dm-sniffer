@@ -14,6 +14,7 @@ import aiohttp
 import json
 import websockets
 import time
+import traceback
 import uuid
 from datetime import datetime
 
@@ -47,7 +48,7 @@ async def get_nip05(pubkey):
     pubkey_metadata_reply = await websocket.recv()
 
     if "EOSE" not in pubkey_metadata_reply and pubkey_metadata_reply:
-        print(pubkey_metadata_reply)
+        #print(pubkey_metadata_reply)
         pubkey_metadata_reply = pubkey_metadata_reply.strip()  # Remove whitespace characters
         pubkey_metadata = json.loads(pubkey_metadata_reply)
 
@@ -77,7 +78,7 @@ async def get_nip05(pubkey):
 
     return nip_05_identifier
 async def process_event(event_json):
-    print(event_json)
+    #print(event_json)
     print("--- DM DETECTED ---")
     sender = event_json["pubkey"]
     receiver = None
@@ -103,19 +104,28 @@ async def process_event(event_json):
 async def websocket_client(uri):
     global websocket  # to make websocket accessible in other functions
 
-    async with websockets.connect(uri) as websocket:
-        print("Connected.\n")
+    while True:
+        try:
+            async with websockets.connect(uri) as websocket:
+                print("Connected.\n")
+                
+                await websocket.send(json.dumps(subscription_request))
 
-        await websocket.send(json.dumps(subscription_request))
+                while True:
+                    response = await websocket.recv()
+                    response_json = json.loads(response)
 
-        while True:
-            response = await websocket.recv()
-            response_json = json.loads(response)
+                    if response_json[0] == "EVENT":
+                        await process_event(response_json[2])
+                    #time.sleep(1)
 
-            if response_json[0] == "EVENT":
-                await process_event(response_json[2])
-            time.sleep(1)
-
+        except Exception as e:
+            print("An error occurred. Details:\n", traceback.format_exc())
+            print("Attempting to reconnect in 5 seconds...")
+            await asyncio.sleep(5)
+        else:
+            print("Disconnecting...")
+            break
 
 print("Connecting to relay...")
 asyncio.get_event_loop().run_until_complete(websocket_client(relay_uri))
