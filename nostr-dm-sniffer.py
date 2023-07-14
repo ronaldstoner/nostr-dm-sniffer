@@ -95,8 +95,12 @@ async def process_event(event_json):
     else:
         print("Receiver: Not Found")
 
-    content_length = len(event_json["content"])
-    print(f"Length of Encrypted Content: {content_length}")
+    content_str = event_json["content"]
+    content_len = len(event_json["content"])
+    _, iv_str = content_str.split("?iv=")
+    iv_length_exact = len(iv_str)
+    original_encrypted_length = content_len - len("?iv=") - iv_length_exact
+    print(f"Length of Encrypted Content: {original_encrypted_length}")
 
     timestamp_utc = datetime.utcfromtimestamp(event_json["created_at"]).isoformat()
     print(f"Timestamp (UTC): {timestamp_utc}\n")
