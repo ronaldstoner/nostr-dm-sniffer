@@ -24,6 +24,21 @@ df = pd.read_csv('data.csv', names=['sender_nip05', 'sender', 'receiver_nip05', 
 # Count the sender-receiver pairs
 contacts = df.groupby(['sender', 'receiver'])['sender_nip05'].count().reset_index(name='count')
 
+# Create a dictionary of dictionaries to store sender: receiver, count 
+relationship_dict = {}
+for index, row in contacts.iterrows():
+    receiver_count = {row['receiver']: row['count']}
+    if row['sender'] in relationship_dict:
+        relationship_dict[row['sender']].update(receiver_count)
+    else:
+        relationship_dict[row['sender']] = receiver_count
+
+# Print out the relationships to the console
+print("\nRelationships:")
+for sender, receiver_counts in relationship_dict.items():
+    rec_counts = ", ".join([f'{receiver} ({count})' for receiver, count in receiver_counts.items()])
+    print(f'{sender} talks to {rec_counts}')
+
 # Create directed graph
 G = nx.from_pandas_edgelist(contacts, 'sender', 'receiver', 'count', create_using=nx.DiGraph())
 
