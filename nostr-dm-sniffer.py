@@ -46,14 +46,28 @@ async def get_nip05(pubkey):
     await websocket.send(request)
     pubkey_metadata_reply = await websocket.recv()
 
-    if "EOSE" not in pubkey_metadata_reply and pubkey_metadata_reply is not None:
-        pubkey_metadata_reply = pubkey_metadata_reply.replace('\n', '')  # Remove newline characters from the metadata string
+    if "EOSE" not in pubkey_metadata_reply and pubkey_metadata_reply:
+        print(pubkey_metadata_reply)
+        pubkey_metadata_reply = pubkey_metadata_reply.strip()  # Remove whitespace characters
         pubkey_metadata = json.loads(pubkey_metadata_reply)
-        json_acceptable_string = pubkey_metadata[2]['content']
-        d = json.loads(json_acceptable_string)
-        name = d['name']
 
-        nip_05_identifier = name
+        json_acceptable_string = pubkey_metadata[2].get('content')
+
+        if json_acceptable_string:  # checking if json_acceptable_string is not None and if it isn't an empty string
+            try:
+                d = json.loads(json_acceptable_string)
+                name = d.get('name')
+                display_name = d.get('display_name')
+                nip_05_identifier = name if name else display_name
+            
+                if not nip_05_identifier:
+                    nip_05_identifier = 'No NIP05 id found'
+            
+            except json.JSONDecodeError:
+                nip_05_identifier = 'NIP05 Decode Error'
+
+        else:
+            nip_05_identifier = "No valid NIP05 found"
 
         await websocket.send(json.dumps(["CLOSE", "nip05-" + pubkey[:8]]))
         pubkey_metadata_close = await websocket.recv()
@@ -62,8 +76,8 @@ async def get_nip05(pubkey):
         nip_05_identifier = "No NIP05 found"
 
     return nip_05_identifier
-
 async def process_event(event_json):
+    print(event_json)
     print("--- DM DETECTED ---")
     sender = event_json["pubkey"]
     receiver = None
