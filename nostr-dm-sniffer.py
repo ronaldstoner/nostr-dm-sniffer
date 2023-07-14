@@ -11,11 +11,13 @@ __website__     = "www.stoner.com"
 
 import asyncio
 import aiohttp
+import csv
 import json
-import websockets
+import os
 import time
 import traceback
 import uuid
+import websockets
 from datetime import datetime
 
 # Construct the URI for relay
@@ -23,6 +25,12 @@ relay_uri = 'wss://relay.damus.io'  # replace with your actual relay URI
 
 # Current epoch time
 now = int(time.time())
+
+# Check and write CSV header
+if not os.path.isfile('data.csv'):
+    with open('data.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['sender', 'sender_nip05', 'receiver', 'receiver_nip05', 'timestamp'])  # write header
 
 # NIP-4 event subscription request
 subscription_id = uuid.uuid1().hex
@@ -84,6 +92,10 @@ async def get_nip05(pubkey):
         nip_05_identifier = "No NIP05 found"
 
     return nip_05_identifier
+
+def write_to_csv(writer, data):
+    writer.writerow(data)
+
 async def process_event(event_json):
     #print(event_json)
     sender = ""
@@ -93,11 +105,14 @@ async def process_event(event_json):
     iv_str = ""
     iv_length_exact = 0
     original_encrypted_length = 0
+    sender_nip05 = ""
+    receiver_nip05 = ""
     print("--- DM DETECTED ---")
     sender = event_json["pubkey"]
     receiver = None
 
-    print(f"Sender: {sender} ({await get_nip05(sender)})")
+    sender_nip05 = await get_nip05(sender)
+    print(f"Sender: {sender} ({sender_nip05})")
 
     for tag in event_json["tags"]:
         if tag[0] == "p":
@@ -105,14 +120,21 @@ async def process_event(event_json):
             break
 
     if receiver:
-        print(f"Receiver: {receiver} ({await get_nip05(receiver)})")
+        receiver_nip05 = await get_nip05(receiver)
+        print(f"Receiver: {receiver} ({receiver_nip05})")
     else:
         print("Receiver: Not Found")
 
     content_str = event_json["content"]
     content_len = len(event_json["content"])
     content_str_without_iv, iv_str = content_str.split("?iv=")
+    
+    if "?iv=" in content_str:
+        content_str_without_iv, iv_str = content_str.split("?iv=")
+    else:
+        iv_str = "No IV found"
     iv_length_exact = len(iv_str)
+    
     original_encrypted_length = content_len - len("?iv=") - iv_length_exact
     print(f"Length of Encrypted Content: {original_encrypted_length}")
     print(f"Encrypted Content: {content_str_without_iv}")
@@ -120,6 +142,12 @@ async def process_event(event_json):
 
     timestamp_utc = datetime.utcfromtimestamp(event_json["created_at"]).isoformat()
     print(f"Timestamp (UTC): {timestamp_utc}\n")
+
+    # Create a data dictionary and append it to csv
+    data = [sender, sender_nip05, receiver, receiver_nip05, timestamp_utc]
+    with open('data.csv', 'a', newline='') as file:  # changed to 'a' (append) mode
+        writer = csv.writer(file)
+        write_to_csv(writer, data)
 
 async def websocket_client(uri):
     global websocket  # to make websocket accessible in other functions
