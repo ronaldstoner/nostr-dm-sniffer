@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+
+"""map-relationships.py: A python script to visualize data sniffed and put into data.csv"""
+
+__author__      = "Ron Stoner"
+__copyright__   = "None"
+__pubkey__      = "npub1qjtnsj6hks7pq7nh3pcyv2gpha5wp6zc8vew9qt9vd2rcpvhsjjqydz44v"
+__website__     = "www.stoner.com"
+
+#!/usr/bin/env python
+
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -46,7 +57,8 @@ G = nx.from_pandas_edgelist(contacts, 'sender', 'receiver', 'count', create_usin
 color_map = get_colors(G.nodes)
 
 # Create a layout for our nodes
-pos = nx.spring_layout(G, seed=123)
+#pos = nx.spring_layout(G, seed=123)
+pos = nx.spring_layout(G, scale=1.5, k=0.3, seed=123)
 
 # Plot the graph
 labels = nx.get_edge_attributes(G, 'count')

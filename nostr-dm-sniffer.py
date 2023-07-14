@@ -7,8 +7,6 @@ __copyright__   = "None"
 __pubkey__      = "npub1qjtnsj6hks7pq7nh3pcyv2gpha5wp6zc8vew9qt9vd2rcpvhsjjqydz44v"
 __website__     = "www.stoner.com"
 
-#!/usr/bin/env python
-
 import asyncio
 import aiohttp
 import csv

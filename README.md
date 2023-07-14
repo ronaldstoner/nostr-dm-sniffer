@@ -9,7 +9,7 @@ A python script to sniff and report on metadata related to nostr DMs (kind 4).
 ## Usage - sniffer 
 1. `python nostr-dm-sniffer.py`
 
-## Usage - visualizor 
+## Usage - visualizer 
 1. `python map-relationships.py` - requires data.csv to be generated from sniffer
 
 ## Screenshots
